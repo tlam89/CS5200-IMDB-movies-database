@@ -1,0 +1,244 @@
+---
+title: "Practicum II IMDB Movie Database"
+output: html_notebook
+---
+authors: Audrey Jo, Hasti Gheibi, Thinh Lam
+
+# Installations
+Install the required packages.
+- tidyverse: used in [Learning R (LinkedIn Learning)](https://www.linkedin.com/learning/learning-r-2/r-for-data-science) for working with tabular data
+- RODBC: connecting to MySQL Server
+```{r}
+if (!require("tidyverse")) install.packages("tidyverse")
+if (!require("RMySQL")) install.packages("RMySQL")
+```
+
+# Load data from IMDB
+The data for this project was downloaded from [IMDB](https://www.imdb.com/interfaces/) and stored in the data folder.
+The unzipped tsv files are read into R using tidyverse's read_tsv() function.
+Troubleshooting errors:
+1. run: title_akas <- read_tsv("data/title.akas.tsv")
+   error: Error in nchar(x) : invalid multibyte string, element 5
+   solution: https://minimaxir.com/2018/07/imdb-data-analysis/
+2. run: title_basics <- read_tsv("data/title.basics.tsv", na="\\N", quote = "")
+   error: Warning: 67107 parsing failures.
+          row     col           expected actual                    file
+          34985 endYear 1/0/T/F/TRUE/FALSE   1947 'data/title.basics.tsv'
+   solution: https://stackoverflow.com/a/47335960
+   
+```{r}
+library(tidyverse) # load tidyverse to use read_tsv() function
+title_akas <- read_tsv("data/title.akas.tsv", na="\\N", quote = "")
+title_basics <- read_tsv("data/title.basics.tsv", na="\\N", quote = "", col_types = cols(endYear = col_double()))
+title_crew <- read_tsv("data/title.crew.tsv", na="\\N", quote = "")
+title_episode <- read_tsv("data/title.episode.tsv", na="\\N", quote = "")
+title_principals <- read_tsv("data/title.principals.tsv", na="\\N", quote = "")
+title_ratings <- read_tsv("data/title.ratings.tsv", na="\\N", quote = "")
+name_basics <- read_tsv("data/name.basics.tsv", na="\\N", quote = "")
+```
+
+# Data Exploration
+
+## Title Akas data description and preview
+title.akas.tsv.gz - Contains the following information for titles:
+- titleId (string) - a tconst, an alphanumeric unique identifier of the title
+- ordering (integer) – a number to uniquely identify rows for a given titleId
+- title (string) – the localized title
+- region (string) - the region for this version of the title
+- language (string) - the language of the title
+- types (array) - Enumerated set of attributes for this alternative title. One or more of the   following: "alternative", "dvd", "festival", "tv", "video", "working", "original", "imdbDisplay". New values may be added in the future without warning
+- attributes (array) - Additional terms to describe this alternative title, not enumerated
+- isOriginalTitle (boolean) – 0: not original title; 1: original title
+```{r}
+head(title_akas, 3)
+```
+
+## Title Basics data description and preview
+title.basics.tsv.gz - Contains the following information for titles:
+- tconst (string) - alphanumeric unique identifier of the title
+- titleType (string) – the type/format of the title (e.g. movie, short, tvseries, tvepisode, video, etc)
+- primaryTitle (string) – the more popular title / the title used by the filmmakers on promotional materials at the point of release
+- originalTitle (string) - original title, in the original language
+- isAdult (boolean) - 0: non-adult title; 1: adult title
+- startYear (YYYY) – represents the release year of a title. In the case of TV Series, it is the series start year
+- endYear (YYYY) – TV Series end year. ‘\N’ for all other title types
+- runtimeMinutes – primary runtime of the title, in minutes
+- genres (string array) – includes up to three genres associated with the title
+```{r}
+head(title_basics)
+```
+## Movie Crew data description and preview
+title.crew.tsv.gz – Contains the director and writer information for all the titles in IMDb. Fields include:
+- tconst (string) - alphanumeric unique identifier of the title
+- directors (array of nconsts) - director(s) of the given title
+- writers (array of nconsts) – writer(s) of the given title
+```{r}
+head(title_crew, 3)
+```
+
+## TV Episode description and preview
+title.episode.tsv.gz – Contains the tv episode information. Fields include:
+- tconst (string) - alphanumeric identifier of episode
+- parentTconst (string) - alphanumeric identifier of the parent TV Series
+- seasonNumber (integer) – season number the episode belongs to
+- episodeNumber (integer) – episode number of the tconst in the TV series
+```{r}
+head(title_episode, 3)
+```
+
+## Main Cast/Crew description and preview
+title.principals.tsv.gz – Contains the principal cast/crew for titles
+- tconst (string) - alphanumeric unique identifier of the title
+- ordering (integer) – a number to uniquely identify rows for a given titleId
+- nconst (string) - alphanumeric unique identifier of the name/person
+- category (string) - the category of job that person was in
+- job (string) - the specific job title if applicable, else '\N'
+- characters (string) - the name of the character played if applicable, else '\N'
+```{r}
+head(title_principals, 3)
+```
+
+## Ratings data description and preview
+title.ratings.tsv.gz – Contains the IMDb rating and votes information for titles
+- tconst (string) - alphanumeric unique identifier of the title
+- averageRating – weighted average of all the individual user ratings
+- numVotes - number of votes the title has received
+```{r}
+head(title_ratings, 3)
+```
+
+## Name data description and preview
+name.basics.tsv.gz – Contains the following information for names:
+- nconst (string) - alphanumeric unique identifier of the name/person
+- primaryName (string)– name by which the person is most often credited
+- birthYear – in YYYY format
+- deathYear – in YYYY format if applicable, else '\N'
+- primaryProfession (array of strings)– the top-3 professions of the person
+- knownForTitles (array of tconsts) – titles the person is known for
+```{r}
+head(name_basics, 3)
+```
+
+# Data Model (ERD in Crow's Foot notation)
+TODO--------
+Create a data model in the form of an ERD in Crow's Foot notation using a tool of your choice (e.g., LucidChart, TOAD, MySQL Workbench, etc.) and embed an image of the model in your notebook.
+-----------
+
+# Data Model (Junction/Association tables)
+TODO-------
+Add junction/association tables to normalize many-to-many relationships, normalize multi-valued attributes, and create lookup tables for categorical attribute values. Embed an updated image of the model in your notebook.
+-----------
+
+# Data Model (add two new attributes)
+TODO-------
+Add two new attributes (columns) to the appropriate tables: one for the age of a person and one for the number of movies a person has appeared in. Embed an updated image of the model in your notebook. Leave those columns empty for now. They will be filled in later.
+-----------
+
+# BCNF
+TODO-------
+Ensure that the relational model is in at least BCNF, except for 2C. Why would someone choose to denormalize data as done in 2C? ("Because the assignment told us to" is not a deep enough answer.)
+-----------
+
+# Create Tables
+In order to connect to MySQL Server on a Mac, need to install freetds and unixodbc. [Instructions](https://db.rstudio.com/best-practices/drivers/#dsn-configuration-files)
+- on Mac, run homebrew in Terminal: brew install freetds --with-unixodbc
+In R Notebook, install RMySQL to connect to the database. [Instructions](https://stackoverflow.com/a/54997040)
+
+TODO-------
+Create and then run CREATE TABLE statements to build the schema. These statements must run from within your notebook and not from a separate script. Ensure proper referential integrity.
+-----------
+
+Creates a connection to MySQL.
+```{r}
+# https://stackoverflow.com/a/54997040
+library("RMySQL")
+con <- dbConnect(MySQL(), 
+                 user = rstudioapi::askForPassword("Database user"), 
+                 password = rstudioapi::askForPassword("Database password"), 
+                 host = 'localhost')
+```
+
+Deletes the movies database if it exists.
+```{sql connection=con}
+DROP DATABASE IF EXISTS movies;
+```
+
+Creates the movies database if it doesn't exist.
+```{sql connection=con}
+CREATE DATABASE IF NOT EXISTS movies;
+```
+
+Makes a new connection to the movies database.
+```{r}
+rm(con)
+con <- dbConnect(MySQL(), 
+                 user = rstudioapi::askForPassword("Database user"), 
+                 password = rstudioapi::askForPassword("Database password"), 
+                 dbname = "movies",
+                 host = "localhost")
+```
+
+
+```{sql connection=con}
+USE movies;
+```
+
+Determine the lengths of VARCHAR columns.
+```{r}
+temp <- filter(title_akas)$titleId
+cat("titleId", max(str_length(temp)), "\n") # get maximum string length in the column
+
+rm(temp)
+temp <- filter(title_akas)$title # filter one column in data frame
+cat("title", max(str_length(temp)), "\n") # concatenate variables (no need to use print)
+
+rm(temp)
+temp <- filter(title_akas)$region
+temp <- temp[!is.na(temp)] # filter out NAs
+cat("region", max(str_length(temp)), "\n")
+
+rm(temp)
+temp <- filter(title_akas)$language
+temp <- temp[!is.na(temp)]
+cat("language", max(str_length(temp)), "\n")
+
+rm(temp)
+temp <- filter(title_akas)$types
+temp <- temp[!is.na(temp)]
+cat("types", max(str_length(temp)), "\n")
+
+rm(temp)
+temp <- filter(title_akas)$attributes
+temp <- temp[!is.na(temp)]
+cat("attributes", max(str_length(temp)), "\n")
+```
+
+```{sql connection=con}
+DROP TABLE IF EXISTS akas;
+```
+
+
+Create akas table.
+```{sql connection=con}
+CREATE TABLE `akas` (
+  `titleId` varchar(15) NOT NULL,
+  `ordering` int NOT NULL,
+  `title` varchar(835) NOT NULL,
+  `region` varchar(5) DEFAULT NULL,
+  `language` varchar(5) DEFAULT NULL,
+  `types` varchar(25) DEFAULT NULL,
+  `attributes` varchar(65) DEFAULT NULL,
+  `isOriginalTitle` tinyint DEFAULT NULL,
+  PRIMARY KEY (`titleId`,`ordering`)
+);
+```
+
+The code below should be changed based on the tables you have in the database.
+```{sql connection=con}
+LOAD DATA INFILE "/Users/audrey/MySQLData/title.akas.tsv"
+INTO TABLE akas
+FIELDS TERMINATED BY "	"
+LINES TERMINATED BY "\n"
+IGNORE 1 ROWS;
+```
+
